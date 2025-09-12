@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agency Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        .hidden { display: none !important; }
+        /* Custom scrollbar for better dark mode look */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #111827; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+        .kanban-card, .crm-card { cursor: grab; }
+        .kanban-card:active, .crm-card:active { cursor: grabbing; }
+        .sidebar-text { transition: opacity 0.2s ease-in-out; }
+    </style>
+</head>
+<body class="bg-gray-900 text-slate-200">
+
+    <!-- =========== LOGIN PAGE =========== -->
+    <div id="login-page" class="flex h-screen w-full items-center justify-center bg-gray-900">
+        <div class="w-full max-w-sm rounded-xl bg-gray-800 p-8 shadow-2xl border border-gray-700">
+            <div class="mb-6 text-center">
+                <div id="login-icon-container" class="mx-auto h-12 w-12 text-blue-500"></div>
+                <h1 class="mt-4 text-2xl font-bold text-white">Agency Platform</h1>
+                <p class="text-slate-400">Đăng nhập để quản lý dự án & khách hàng</p>
+            </div>
+            <form id="login-form" class="space-y-6">
+                <div>
+                    <label class="text-sm font-medium text-slate-300">Tài khoản</label>
+                    <input id="username" type="text" placeholder="Vd: admin, user1" class="mt-2 w-full rounded-lg border-2 border-gray-600 bg-gray-700 px-4 py-2 text-white placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-slate-300">Mật khẩu</label>
+                    <input id="password" type="password" placeholder="Mật khẩu là 'admin' hoặc '123'" class="mt-2 w-full rounded-lg border-2 border-gray-600 bg-gray-700 px-4 py-2 text-white placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                </div>
+                <p id="login-error" class="text-sm text-red-500 hidden"></p>
+                <button type="submit" class="w-full rounded-lg bg-blue-600 px-4 py-3 text-lg font-semibold text-white transition-colors hover:bg-blue-700">
+                    Đăng nhập
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- =========== MAIN DASHBOARD =========== -->
+    <main id="dashboard-page" class="hidden h-screen w-full font-sans text-slate-200">
+        <div class="flex h-full">
+            <!-- Sidebar Navigation -->
+            <nav id="sidebar" class="flex flex-col justify-between border-r border-gray-800 bg-gray-900 transition-all duration-300">
+                <div>
+                    <div class="flex h-16 items-center justify-between border-b border-gray-800 px-4">
+                        <div class="flex items-center gap-3 overflow-hidden">
+                            <svg class="h-8 w-8 flex-shrink-0 text-blue-500" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M5 3H10V5H5V3ZM14 3H19V5H14V3ZM10 19H5V21H10V19ZM19 19H14V21H19V19ZM3 5V10H5V5H3ZM3 14V19H5V14H3ZM21 10V5H19V10H21ZM21 19V14H19V19H21ZM12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17C14.7614 17 17 14.7614 17 12C17 9.23858 14.7614 7 12 7Z"/></svg>
+                            <span class="sidebar-text text-xl font-bold text-white whitespace-nowrap">Agency</span>
+                        </div>
+                         <button id="sidebar-toggle-desktop" class="rounded-md p-1 text-slate-400 hover:bg-gray-700 hidden lg:block">
+                            <i data-lucide="chevrons-left" class="h-5 w-5"></i>
+                        </button>
+                    </div>
+                    <ul id="nav-list" class="flex flex-col gap-2 p-4">
+                        <!-- Nav items will be injected here by JS -->
+                    </ul>
+                </div>
+                <div class="border-t border-gray-800 p-4">
+                    <div class="flex items-center gap-3">
+                         <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center font-bold text-white flex-shrink-0" id="user-avatar"></div>
+                        <div class="overflow-hidden">
+                             <p id="user-name" class="sidebar-text text-sm font-semibold text-white whitespace-nowrap"></p>
+                             <p id="user-role" class="sidebar-text text-xs text-slate-400 whitespace-nowrap"></p>
+                        </div>
+                    </div>
+                    <button id="logout-button" class="mt-4 flex w-full items-center gap-3 rounded-lg p-3 text-left text-sm font-medium transition-colors text-slate-400 hover:bg-gray-800 hover:text-white">
+                        <i data-lucide="log-out" class="h-5 w-5 flex-shrink-0"></i>
+                        <span class="sidebar-text">Đăng xuất</span>
+                    </button>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <div class="flex-1 flex flex-col overflow-hidden">
+                 <header class="flex h-16 items-center justify-between border-b border-gray-800 bg-gray-900/50 px-6">
+                    <button id="sidebar-toggle-mobile" class="rounded-md p-1 text-slate-400 hover:bg-gray-700 lg:hidden">
+                        <i data-lucide="menu" class="h-6 w-6"></i>
+                    </button>
+                    <div id="page-title-header" class="text-lg font-semibold text-white"></div>
+                     <div class="w-8"></div> <!-- Spacer -->
+                </header>
+                <main id="main-content" class="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-950/30">
+                    <!-- Content for pages will be injected here -->
+                </main>
+            </div>
+        </div>
+    </main>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        //=========== MOCK DATABASE ===========//
+        const usersDB = {
+            admin: { password: 'admin', role: 'admin', name: 'Quản trị viên' },
+            user1: { password: '123', role: 'user', name: 'Nguyễn Văn A' },
+            user2: { password: '123', role: 'user', name: 'Trần Thị B' },
+        };
+
+        const initialTasks = [
+            { id: 1, content: '[CRM] Follow up khách hàng tiềm năng ABC', status: 'To Do', userId: 'user1' },
+            { id: 2, content: '[PM] Thiết kế wireframe cho dự án Tech Solutions', status: 'In Progress', userId: 'user1' },
+            { id: 3, content: '[PM] Báo cáo tiến độ tuần dự án Resort Paradise', status: 'Done', userId: 'user2' },
+            { id: 4, content: '[CRM] Chuẩn bị hợp đồng cho Cửa hàng Gốm Sứ', status: 'To Do', userId: 'user2' },
+            { id: 5, content: '[PM] Tối ưu camp Google Ads - Tech Solutions', status: 'In Progress', userId: 'user1' },
+            { id: 6, content: '[CRM] Lên kế hoạch tiếp cận Tập đoàn Vina', status: 'To Do', userId: 'user2' },
+        ];
+
+        const crmDB = {
+            'Lead In': [ { id: 1, name: 'Công ty ABC', value: '50.000.000 VND', contact: 'Anh Hùng' }, { id: 2, name: 'Startup XYZ', value: '30.000.000 VND', contact: 'Chị Dung' }, ],
+            'Contact Made': [ { id: 3, name: 'Tập đoàn Vina', value: '150.000.000 VND', contact: 'Anh Nam' }, ],
+            'Proposal Sent': [ { id: 4, name: 'Cửa hàng Gốm Sứ', value: '75.000.000 VND', contact: 'Chị Mai' }, ],
+            'Negotiation': [ { id: 5, name: 'Resort Paradise', value: '200.000.000 VND', contact: 'Anh Binh' }, ],
+        };
+        
+        const projectsDB = [
+            {
+                id: 'p1', clientName: 'Tech Solutions Inc.', manager: 'user1',
+                documents: [
+                    { id: 1, name: 'Hợp đồng Digital Marketing.pdf', type: 'doc', size: '1.2MB', modified: '10/09/2025' },
+                    { id: 2, name: 'Kế hoạch triển khai Q4.docx', type: 'doc', size: '850KB', modified: '08/09/2025' },
+                    { id: 3, name: 'Báo cáo tuần 1.xlsx', type: 'doc', size: '950KB', modified: '15/09/2025' },
+                ],
+            },
+            {
+                id: 'p2', clientName: 'Resort Paradise', manager: 'user2',
+                documents: [ { id: 4, name: 'Hợp đồng SEO & Ads.pdf', type: 'doc', size: '1.5MB', modified: '01/09/2025' }, { id: 5, name: 'Creative Assets', type: 'folder', modified: '05/09/2025' }, ],
+            }
+        ];
+        
+        const allLeadsByProject = {
+            'p1': [ { id: 'l1', source: 'Facebook Ads', name: 'Nguyễn Thị An', contact: 'an.nguyen@email.com', date: '14/09/2025' }, { id: 'l2', source: 'Google Ads', name: 'Trần Văn Bách', contact: '0901234567', date: '14/09/2025' }, { id: 'l3', source: 'Tiktok Ads', name: 'Lê Thị Cẩm', contact: 'cam.le@email.com', date: '13/09/2025' }, ],
+            'p2': [ { id: 'l5', source: 'Google Ads', name: 'Hoàng Văn E', contact: 'e.hoang@email.com', date: '10/09/2025' }, ]
+        };
+        
+        const aiLogsDB = {
+            'p1': [ { timestamp: '2025-09-15 10:30', action: '[Google Ads] Tăng ngân sách chiến dịch "Tìm kiếm Khách hàng tiềm năng" lên 2.000.000 VND/ngày.' }, { timestamp: '2025-09-14 15:00', action: '[Facebook Ads] Tự động tối ưu hóa giá thầu cho nhóm quảng cáo "Retargeting".' }, ],
+            'p2': [ { timestamp: '2025-09-12 11:00', action: '[Google Ads] Khởi chạy chiến dịch "Booking mùa thu".' } ]
+        };
+
+        //=========== APP STATE ===========//
+        let currentUser = null;
+        let activePage = 'chatbot';
+        let tasks = [...initialTasks];
+        let draggedTaskId = null;
+        let currentProjectView = null;
+        let isSidebarCollapsed = window.innerWidth < 1024;
+
+        //=========== DOM ELEMENTS ===========//
+        const loginPage = document.getElementById('login-page');
+        const dashboardPage = document.getElementById('dashboard-page');
+        const loginForm = document.getElementById('login-form');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const loginError = document.getElementById('login-error');
+        const mainContent = document.getElementById('main-content');
+        const navList = document.getElementById('nav-list');
+        const userNameDisplay = document.getElementById('user-name');
+        const userRoleDisplay = document.getElementById('user-role');
+        const userAvatar = document.getElementById('user-avatar');
+        const logoutButton = document.getElementById('logout-button');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggleDesktop = document.getElementById('sidebar-toggle-desktop');
+        const sidebarToggleMobile = document.getElementById('sidebar-toggle-mobile');
+        const pageTitleHeader = document.getElementById('page-title-header');
+
+        //=========== UI FUNCTIONS ===========//
+        const applySidebarState = () => {
+            if (isSidebarCollapsed) {
+                sidebar.classList.add('w-20');
+                sidebar.classList.remove('w-64');
+                document.querySelectorAll('.sidebar-text').forEach(el => el.classList.add('hidden'));
+                sidebarToggleDesktop.innerHTML = '<i data-lucide="chevrons-right" class="h-5 w-5"></i>';
+            } else {
+                sidebar.classList.add('w-64');
+                sidebar.classList.remove('w-20');
+                document.querySelectorAll('.sidebar-text').forEach(el => el.classList.remove('hidden'));
+                sidebarToggleDesktop.innerHTML = '<i data-lucide="chevrons-left" class="h-5 w-5"></i>';
+            }
+            if (window.innerWidth < 1024) {
+                 sidebar.classList.add('-translate-x-full', 'absolute', 'h-full', 'z-20');
+            } else {
+                 sidebar.classList.remove('-translate-x-full', 'absolute', 'h-full', 'z-20');
+            }
+            lucide.createIcons();
+        };
+        
+        const toggleSidebar = () => {
+             if (window.innerWidth < 1024) {
+                sidebar.classList.toggle('-translate-x-full');
+            } else {
+                isSidebarCollapsed = !isSidebarCollapsed;
+                applySidebarState();
+            }
+        };
+
+        //=========== RENDER FUNCTIONS ===========//
+        const getPageHeaderHTML = (title, subtitle) => `
+            <div class="mb-6">
+                <h1 class="text-3xl font-bold text-white relative pb-2">${title}</h1>
+                <p class="text-slate-400 mt-1">${subtitle}</p>
+            </div>`;
+
+        const renderPage = () => {
+            mainContent.innerHTML = '';
+            let pageTitle = '';
+            const navItem = navItems.find(item => item.id === activePage);
+            if (navItem) pageTitle = navItem.label;
+
+            if (currentProjectView) {
+                mainContent.innerHTML = getProjectDetailHTML(currentProjectView);
+                renderProjectDetailTabs(currentProjectView, 'documents');
+                addProjectDetailEventListeners(currentProjectView);
+                pageTitle = `Dự án: ${currentProjectView.clientName}`;
+            } else {
+                 switch(activePage) {
+                    case 'chatbot': mainContent.innerHTML = getChatbotHTML(); addChatbotEventListeners(); break;
+                    case 'tasks': mainContent.innerHTML = getKanbanHTML(); renderKanbanTasks(); addKanbanEventListeners(); break;
+                    case 'crm': mainContent.innerHTML = getCrmHTML(); renderCrmDeals(); break;
+                    case 'projects': mainContent.innerHTML = getProjectsHTML(); renderProjectFolders(); break;
+                    case 'leads': mainContent.innerHTML = getLeadsHTML(); renderLeadsByProject(); break;
+                }
+            }
+            pageTitleHeader.textContent = pageTitle;
+            updateNav();
+            lucide.createIcons();
+        };
+
+        const navItems = [
+            { id: 'chatbot', label: 'Chatbot AI', icon: 'bot' },
+            { id: 'tasks', label: 'Công việc', icon: 'check-square' },
+            { id: 'crm', label: 'CRM', icon: 'users' },
+            { id: 'projects', label: 'Project Drive', icon: 'folder-kanban' },
+            { id: 'leads', label: 'Leads', icon: 'filter' },
+        ];
+
+        const updateNav = () => {
+            navList.innerHTML = '';
+            navItems.forEach(item => {
+                const isActive = activePage === item.id;
+                const buttonClasses = `flex w-full items-center gap-3 rounded-lg p-3 text-left text-sm font-medium transition-colors ${isActive ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-gray-700 hover:text-white'}`;
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <button data-page="${item.id}" class="${buttonClasses}">
+                        <i data-lucide="${item.icon}" class="inline-block h-5 w-5 flex-shrink-0"></i>
+                        <span class="sidebar-text">${item.label}</span>
+                    </button>
+                `;
+                navList.appendChild(li);
+            });
+            document.querySelectorAll('#nav-list button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    activePage = e.currentTarget.dataset.page;
+                    currentProjectView = null;
+                    renderPage();
+                    if(window.innerWidth < 1024) sidebar.classList.add('-translate-x-full');
+                });
+            });
+            applySidebarState();
+        };
+        
+        // --- Chatbot ---
+        const getChatbotHTML = () => `
+            <div>
+                 ${getPageHeaderHTML('Chatbot AI', 'Trợ lý ảo giúp bạn truy xuất thông tin, tạo task, theo dõi dự án.')}
+                <div class="flex flex-col bg-gray-800/50 rounded-lg" style="height: calc(100vh - 200px);">
+                    <div id="chatbot-messages" class="flex-1 space-y-4 overflow-y-auto p-4">
+                        <div class="flex items-end gap-2 justify-start">
+                            <div class="h-8 w-8 rounded-full bg-blue-500 flex-shrink-0 flex items-center justify-center"><i data-lucide="bot" class="h-5 w-5 text-white"></i></div>
+                            <div class="max-w-xs rounded-lg px-4 py-2 md:max-w-md rounded-bl-none bg-gray-700 text-slate-200">
+                                <p>Xin chào ${currentUser.name}! Tôi có thể giúp gì cho bạn hôm nay?</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 border-t border-gray-700 p-4">
+                        <input id="chatbot-input" type="text" placeholder="Nhập yêu cầu..." class="flex-1 rounded-lg border-2 border-gray-600 bg-gray-700 px-4 py-2 text-white placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                        <button id="chatbot-send" class="rounded-lg bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700">
+                            <i data-lucide="send" class="h-5 w-5"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+            
+        // --- Kanban Tasks ---
+        const getKanbanHTML = () => `
+            <div>
+                ${getPageHeaderHTML('Bảng công việc (Tasks)', 'Tổng hợp các task CRM và PM của toàn công ty.')}
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    ${['To Do', 'In Progress', 'Done'].map(status => `
+                    <div id="kanban-col-${status.toLowerCase().replace(' ', '')}" data-status="${status}" class="kanban-column flex flex-col rounded-lg bg-gray-900/70 h-[calc(100vh-230px)]">
+                        <h3 class="p-4 text-lg font-semibold text-white border-b-2 border-gray-700 flex-shrink-0">${status}</h3>
+                        <div class="task-list flex-1 space-y-3 overflow-y-auto p-4"></div>
+                    </div>
+                    `).join('')}
+                </div>
+            </div>`;
+
+        const renderKanbanTasks = () => {
+            document.querySelectorAll('.task-list').forEach(list => list.innerHTML = '');
+            const visibleTasks = currentUser.role === 'admin' ? tasks : tasks.filter(t => t.userId === currentUser.username);
+            
+            visibleTasks.forEach(task => {
+                const taskEl = document.createElement('div');
+                taskEl.id = `task-${task.id}`;
+                taskEl.className = "kanban-card rounded-lg bg-gray-700 p-4 shadow-md transition-all hover:bg-gray-600/50";
+                taskEl.draggable = true;
+                taskEl.innerHTML = `
+                    <p class="text-slate-200">${task.content}</p>
+                    <div class="mt-2 text-xs text-slate-400">
+                        <span>Giao cho: </span>
+                        <span class="font-semibold text-slate-300">${usersDB[task.userId]?.name || task.userId}</span>
+                    </div>`;
+                
+                if (task.status === 'To Do') document.querySelector('#kanban-col-todo .task-list').appendChild(taskEl);
+                if (task.status === 'In Progress') document.querySelector('#kanban-col-inprogress .task-list').appendChild(taskEl);
+                if (task.status === 'Done') document.querySelector('#kanban-col-done .task-list').appendChild(taskEl);
+            });
+        };
+        
+        // --- Other render functions (CRM, Projects, etc.) are unchanged in logic but benefit from the new layout ---
+        // ... (The rest of the rendering functions like getCrmHTML, renderCrmDeals, etc. go here unchanged in their core logic)
+        
+        const getCrmHTML = () => `
+            <div>
+                ${getPageHeaderHTML('CRM Pipeline', 'Theo dõi quy trình bán hàng và các cơ hội.')}
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                     ${Object.keys(crmDB).map(stage => `
+                    <div data-stage="${stage}" class="crm-stage flex flex-col rounded-lg bg-gray-900/70 h-[calc(100vh-230px)]">
+                        <h3 class="p-4 text-lg font-semibold text-white border-b-2 border-gray-700 flex-shrink-0">${stage}</h3>
+                        <div class="crm-deal-list flex-1 space-y-3 overflow-y-auto p-4"></div>
+                    </div>
+                    `).join('')}
+                </div>
+            </div>`;
+        
+        const renderCrmDeals = () => {
+            Object.keys(crmDB).forEach(stage => {
+                const listEl = document.querySelector(`.crm-stage[data-stage="${stage}"] .crm-deal-list`);
+                listEl.innerHTML = '';
+                crmDB[stage].forEach(deal => {
+                    listEl.innerHTML += `
+                    <div id="deal-${deal.id}" class="crm-card rounded-lg bg-gray-700 p-4 shadow-md transition-all hover:bg-gray-600/50">
+                        <p class="font-semibold text-white">${deal.name}</p>
+                        <p class="text-sm text-blue-400">${deal.value}</p>
+                        <p class="mt-2 text-xs text-slate-400">Liên hệ: ${deal.contact}</p>
+                    </div>`;
+                });
+            });
+        };
+        
+        const getProjectsHTML = () => `
+             <div>
+                ${getPageHeaderHTML('Project Drive', 'Quản lý các dự án đang hoạt động.')}
+                <div id="project-folders" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                </div>
+            </div>`;
+        
+        const renderProjectFolders = () => {
+            const container = document.getElementById('project-folders');
+            if (!container) return;
+            const visibleProjects = currentUser.role === 'admin' ? projectsDB : projectsDB.filter(p => p.manager === currentUser.username);
+
+            container.innerHTML = visibleProjects.map(proj => `
+                <div data-project-id="${proj.id}" class="project-folder-card flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-gray-800 hover:bg-blue-600 cursor-pointer transition-colors aspect-square">
+                    <i data-lucide="folder-git-2" class="h-12 w-12 text-blue-400"></i>
+                    <span class="font-medium text-white text-center text-sm">${proj.clientName}</span>
+                </div>
+            `).join('');
+
+            document.querySelectorAll('.project-folder-card').forEach(folder => {
+                folder.addEventListener('click', e => {
+                    const projectId = e.currentTarget.dataset.projectId;
+                    currentProjectView = projectsDB.find(p => p.id === projectId);
+                    renderPage();
+                });
+            });
+            lucide.createIcons();
+        };
+
+        const getProjectDetailHTML = (project) => `
+            <div class="flex h-full flex-col bg-gray-800/50 rounded-lg">
+                <div class="p-4 border-b border-gray-700 flex items-center gap-4">
+                    <button id="project-back-btn" class="p-2 rounded-md hover:bg-gray-700">
+                        <i data-lucide="arrow-left" class="h-5 w-5"></i>
+                    </button>
+                    <div>
+                        <h2 class="text-xl font-semibold text-white">Dự án: ${project.clientName}</h2>
+                        <p class="text-sm text-slate-400">Quản lý bởi: ${usersDB[project.manager]?.name || project.manager}</p>
+                    </div>
+                </div>
+                <div class="border-b border-gray-700">
+                    <nav id="project-tabs" class="flex gap-4 px-4 -mb-px">
+                        <button data-tab="documents" class="tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm border-blue-500 text-blue-400">Tài liệu</button>
+                        <button data-tab="leads" class="tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm border-transparent text-slate-400 hover:border-slate-300 hover:text-slate-300">Leads</button>
+                        <button data-tab="ailogs" class="tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm border-transparent text-slate-400 hover:border-slate-300 hover:text-slate-300">AI Logs</button>
+                    </nav>
+                </div>
+                <div id="project-content" class="flex-1 overflow-y-auto">
+                </div>
+            </div>
+        `;
+        
+        const renderProjectDetailTabs = (project, activeTab) => {
+            const contentEl = document.getElementById('project-content');
+            if(!contentEl) return;
+            document.querySelectorAll('#project-tabs .tab-btn').forEach(btn => {
+                const isSelected = btn.dataset.tab === activeTab;
+                btn.classList.toggle('border-blue-500', isSelected); btn.classList.toggle('text-blue-400', isSelected);
+                btn.classList.toggle('border-transparent', !isSelected); btn.classList.toggle('text-slate-400', !isSelected);
+            });
+            switch(activeTab) {
+                case 'documents':
+                    const getFileIcon = (type) => ({ folder: 'folder', doc: 'file-text', image: 'file-image' }[type] || 'file');
+                    contentEl.innerHTML = `<table class="w-full text-left text-sm text-slate-300">... (table content as before) ...</table>`;
+                    break;
+                case 'leads':
+                    contentEl.innerHTML = `<table class="w-full text-left text-sm text-slate-300">... (table content as before) ...</table>`;
+                    break;
+                case 'ailogs':
+                    contentEl.innerHTML = `<div class="p-4 space-y-4">... (log content as before) ...</div>`;
+                    break;
+            }
+            // Re-pasting the innerHTML content for brevity as it's unchanged
+             switch(activeTab) {
+                case 'documents':
+                    const getFileIcon = (type) => ({ folder: 'folder', doc: 'file-text', image: 'file-image' }[type] || 'file');
+                    contentEl.innerHTML = `<table class="w-full text-left text-sm text-slate-300"><thead class="bg-gray-700/50 text-xs uppercase text-slate-400"><tr><th scope="col" class="px-6 py-3">Tên</th><th scope="col" class="px-6 py-3 hidden md:table-cell">Ngày sửa đổi</th><th scope="col" class="px-6 py-3 hidden md:table-cell">Kích thước</th></tr></thead><tbody>${project.documents.map(file => `<tr class="border-b border-gray-700 transition-colors hover:bg-gray-700/50"><th scope="row" class="flex items-center gap-3 whitespace-nowrap px-6 py-4 font-medium text-white"><i data-lucide="${getFileIcon(file.type)}" class="h-5 w-5 text-slate-400"></i><span>${file.name}</span></th><td class="px-6 py-4 hidden md:table-cell">${file.modified}</td><td class="px-6 py-4 hidden md:table-cell">${file.size || '—'}</td></tr>`).join('')}</tbody></table>`;
+                    break;
+                case 'leads':
+                    const leads = allLeadsByProject[project.id] || [];
+                    contentEl.innerHTML = `<table class="w-full text-left text-sm text-slate-300"><thead class="bg-gray-700/50 text-xs uppercase text-slate-400"><tr><th scope="col" class="px-6 py-3">Nguồn</th><th scope="col" class="px-6 py-3">Tên</th><th scope="col" class="px-6 py-3 hidden md:table-cell">Liên hệ</th><th scope="col" class="px-6 py-3 hidden md:table-cell">Ngày</th></tr></thead><tbody>${leads.map(lead => `<tr class="border-b border-gray-700 transition-colors hover:bg-gray-700/50"><td class="px-6 py-4"><span class="px-2 py-1 text-xs rounded-full bg-gray-600 text-slate-300">${lead.source}</span></td><th scope="row" class="px-6 py-4 font-medium text-white">${lead.name}</th><td class="px-6 py-4 hidden md:table-cell">${lead.contact}</td><td class="px-6 py-4 hidden md:table-cell">${lead.date}</td></tr>`).join('')} ${leads.length === 0 ? '<tr><td colspan="4" class="text-center p-6 text-slate-400">Chưa có lead nào cho dự án này.</td></tr>' : ''}</tbody></table>`;
+                    break;
+                case 'ailogs':
+                    const logs = aiLogsDB[project.id] || [];
+                    contentEl.innerHTML = `<div class="p-4 space-y-4">${logs.map(log => `<div class="flex items-start gap-3"><div class="mt-1"><i data-lucide="terminal" class="h-4 w-4 text-green-400"></i></div><div><p class="text-sm text-slate-300">${log.action}</p><p class="text-xs text-slate-500">${log.timestamp}</p></div></div>`).join('')} ${logs.length === 0 ? '<div class="text-center p-6 text-slate-400">Không có hoạt động tự động nào được ghi nhận.</div>' : ''}</div>`;
+                    break;
+            }
+            lucide.createIcons();
+        };
+
+        const getLeadsHTML = () => `
+            <div>
+                 ${getPageHeaderHTML('Danh sách Leads', 'Tổng hợp leads thu về từ các dự án.')}
+                <div id="leads-container" class="flex-1 space-y-6 overflow-y-auto">
+                </div>
+            </div>`;
+        
+        const renderLeadsByProject = () => {
+             const container = document.getElementById('leads-container');
+             if(!container) return;
+             const visibleProjects = currentUser.role === 'admin' ? projectsDB : projectsDB.filter(p => p.manager === currentUser.username);
+             container.innerHTML = visibleProjects.map(project => {
+                 const leads = allLeadsByProject[project.id] || [];
+                 return `<div class="bg-gray-800/50 rounded-lg"><h3 class="p-4 text-lg font-semibold text-white border-b border-gray-700">${project.clientName}</h3><div class="p-4">${leads.length > 0 ? `<ul class="space-y-3">${leads.map(lead => `<li class="flex justify-between items-center p-3 rounded-md bg-gray-700/50"><div><p class="font-medium text-white">${lead.name}</p><p class="text-sm text-slate-400">${lead.contact}</p></div><div class="text-right"><span class="px-2 py-1 text-xs rounded-full bg-gray-600 text-slate-300">${lead.source}</span><p class="text-xs text-slate-500 mt-1">${lead.date}</p></div></li>`).join('')}</ul>` : '<p class="text-slate-400 text-center">Không có leads cho dự án này.</p>'}</div></div>`
+             }).join('');
+        };
+        
+        //=========== EVENT HANDLERS ===========//
+        const handleLogin = (e) => {
+            e.preventDefault();
+            const user = usersDB[usernameInput.value];
+            if (user && user.password === passwordInput.value) {
+                currentUser = { username: usernameInput.value, ...user };
+                loginPage.classList.add('hidden');
+                dashboardPage.classList.remove('hidden');
+                userNameDisplay.textContent = currentUser.name;
+                userRoleDisplay.textContent = currentUser.role === 'admin' ? 'Quản trị viên' : 'Nhân viên';
+                userAvatar.textContent = currentUser.name.charAt(0);
+                renderPage();
+            } else {
+                loginError.textContent = 'Tên đăng nhập hoặc mật khẩu không đúng.';
+                loginError.classList.remove('hidden');
+            }
+        };
+        
+        const handleLogout = () => {
+            currentUser = null;
+            loginPage.classList.remove('hidden');
+            dashboardPage.classList.add('hidden');
+            usernameInput.value = '';
+            passwordInput.value = '';
+            loginError.classList.add('hidden');
+        };
+        
+        const addKanbanEventListeners = () => { /* Logic unchanged */ 
+            document.querySelectorAll('.kanban-card').forEach(task => {
+                task.addEventListener('dragstart', (e) => {
+                    draggedTaskId = parseInt(e.currentTarget.id.split('-')[1]);
+                    setTimeout(() => e.currentTarget.classList.add('opacity-50'), 0);
+                });
+                task.addEventListener('dragend', (e) => e.currentTarget.classList.remove('opacity-50'));
+            });
+            document.querySelectorAll('.kanban-column').forEach(column => {
+                column.addEventListener('dragover', (e) => e.preventDefault());
+                column.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const newStatus = e.currentTarget.dataset.status;
+                    const taskToUpdate = tasks.find(t => t.id === draggedTaskId);
+                    if (taskToUpdate && taskToUpdate.status !== newStatus) {
+                        taskToUpdate.status = newStatus;
+                        renderKanbanTasks(); 
+                    }
+                    draggedTaskId = null;
+                });
+            });
+        };
+        
+        const addChatbotEventListeners = () => { /* Logic unchanged */
+            const sendBtn = document.getElementById('chatbot-send');
+            const input = document.getElementById('chatbot-input');
+            const messagesContainer = document.getElementById('chatbot-messages');
+            const sendMessage = () => {
+                const text = input.value.trim();
+                if (text === '') return;
+                 messagesContainer.innerHTML += `<div class="flex items-end gap-2 justify-end"><div class="max-w-xs rounded-lg px-4 py-2 md:max-w-md rounded-br-none bg-blue-600 text-white"><p>${text}</p></div></div>`;
+                input.value = '';
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                setTimeout(() => {
+                    messagesContainer.innerHTML += `<div class="flex items-end gap-2 justify-start"><div class="h-8 w-8 rounded-full bg-blue-500 flex-shrink-0 flex items-center justify-center"><i data-lucide="bot" class="h-5 w-5 text-white"></i></div><div class="max-w-xs rounded-lg px-4 py-2 md:max-w-md rounded-bl-none bg-gray-700 text-slate-200"><p>Cảm ơn bạn. Tôi đang xử lý thông tin...</p></div></div>`;
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    lucide.createIcons();
+                }, 1000);
+            };
+            sendBtn.addEventListener('click', sendMessage);
+            input.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+        };
+        
+        const addProjectDetailEventListeners = (project) => { /* Logic unchanged */
+            document.getElementById('project-back-btn')?.addEventListener('click', () => {
+                currentProjectView = null; renderPage();
+            });
+            document.querySelectorAll('#project-tabs .tab-btn').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    renderProjectDetailTabs(project, e.currentTarget.dataset.tab);
+                });
+            });
+        };
+
+        //=========== INITIALIZATION ===========//
+        const init = () => {
+            document.getElementById('login-icon-container').innerHTML = `<i data-lucide="building-2" class="h-12 w-12"></i>`;
+            lucide.createIcons();
+            loginForm.addEventListener('submit', handleLogin);
+            logoutButton.addEventListener('click', handleLogout);
+            sidebarToggleDesktop.addEventListener('click', toggleSidebar);
+            sidebarToggleMobile.addEventListener('click', toggleSidebar);
+            window.addEventListener('resize', () => {
+                isSidebarCollapsed = window.innerWidth < 1024;
+                applySidebarState();
+            });
+            applySidebarState();
+        };
+
+        init();
+    });
+    </script>
+</body>
+</html>
+
